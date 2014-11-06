@@ -6,30 +6,6 @@ require 'bundler/setup'
 require 'uservoice-ruby'
 require 'aha-api'
 require 'slop'
-require 'active_support/core_ext'
-
-
-#
-# Convert plain text to HTML. From ActionView.
-#
-def simple_format(text, html_options = {}, options = {})
-  paragraphs = split_paragraphs(text)
-
-  if paragraphs.empty?
-    "<p></p>"
-  else
-    paragraphs.map! { |paragraph|
-      "<p>#{paragraph}</p>"
-    }.join("\n\n").html_safe
-  end
-end
-def split_paragraphs(text)
-  return [] if text.blank?
-
-  text.to_str.gsub(/\r\n?/, "\n").split(/\n\n+/).map! do |t|
-    t.gsub!(/([^\n]\n)(?=[^\n])/, '\1<br />') || t
-  end
-end
 
 def import(opts)
   uservoice_client = UserVoice::Client.new(opts[:uservoice_domain], opts[:uservoice_key], opts[:uservoice_secret])
@@ -41,8 +17,22 @@ def import(opts)
   # Loops through all the suggestions, creating new ideas in Aha! as it goes.
   suggestions.each do |suggestion|
     puts suggestion.inspect if opts[:verbose]
-  
-    aha_client.create_idea(opts[:aha_product], suggestion['title'], simple_format(suggestion['text']))
+    
+    # Fetch the email address for the user.
+    user = uservoice_client.get("/api/v1/users/#{suggestion['creator']['id']}.json")
+    
+    response = aha_client.create_idea(opts[:aha_product], suggestion['title'], suggestion['formatted_text'],
+      "created_by_portal_user" => user['user']['email'])
+    puts response.inspect
+      
+    comments = uservoice_client.get_collection("/api/v1/forums/#{opts[:uservoice_forum_id]}/suggestions/#{suggestion['id']}/comments")
+    comments.each do |comment|
+      puts comment.inspect
+      
+      comment_user = uservoice_client.get("/api/v1/users/#{comment['creator']['id']}.json")
+      aha_client.post("api/v1/ideas/#{response.idea.id}/idea_comments", body: comment['formatted_text'], portal_user: {email: comment_user['user']['email']})
+    end
+    
   end
 
 end

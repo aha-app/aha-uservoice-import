@@ -42,7 +42,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  activesupport
   aha-api!
   slop
   uservoice-ruby
