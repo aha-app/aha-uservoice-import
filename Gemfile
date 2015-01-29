@@ -3,5 +3,5 @@ source 'https://rubygems.org'
 gem 'uservoice-ruby'
 gem 'slop'
 
-#gem 'aha-api', git: 'https://github.com/aha-app/aha-api'
-gem 'aha-api', path: '~/Documents/projects/aha/aha-api'
+gem 'aha-api', git: 'https://github.com/aha-app/aha-api'
+# gem 'aha-api', path: '~/Documents/projects/aha/aha-api'

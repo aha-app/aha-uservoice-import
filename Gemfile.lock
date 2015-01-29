@@ -1,7 +1,8 @@
-PATH
-  remote: ~/Documents/projects/aha/aha-api
+GIT
+  remote: https://github.com/aha-app/aha-api
+  revision: 1166580dad08835dd6c953a5a2f24a537bcc867a
   specs:
-    aha-api (1.0.12)
+    aha-api (1.0.11)
       activesupport
       faraday (~> 0.9.0)
       faraday_middleware
@@ -11,25 +12,25 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    activesupport (4.1.7)
-      i18n (~> 0.6, >= 0.6.9)
+    activesupport (4.2.0)
+      i18n (~> 0.7)
       json (~> 1.7, >= 1.7.7)
       minitest (~> 5.1)
-      thread_safe (~> 0.1)
+      thread_safe (~> 0.3, >= 0.3.4)
       tzinfo (~> 1.1)
     ezcrypto (0.7.2)
-    faraday (0.9.0)
+    faraday (0.9.1)
       multipart-post (>= 1.2, < 3)
     faraday_middleware (0.9.1)
       faraday (>= 0.7.4, < 0.10)
-    hashie (3.3.1)
-    i18n (0.6.11)
+    hashie (3.3.2)
+    i18n (0.7.0)
     json (1.8.1)
-    minitest (5.4.2)
+    minitest (5.5.1)
     multi_json (1.10.1)
     multipart-post (2.0.0)
     oauth (0.4.7)
-    slop (3.6.0)
+    slop (4.0.0)
     thread_safe (0.3.4)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)

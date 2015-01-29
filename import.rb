@@ -21,38 +21,72 @@ def import(opts)
     # Fetch the email address for the user.
     user = uservoice_client.get("/api/v1/users/#{suggestion['creator']['id']}.json")
     
-    response = aha_client.create_idea(opts[:aha_product], suggestion['title'], suggestion['formatted_text'],
-      "created_by_portal_user" => user['user']['email'])
-    puts response.inspect
+    last_name, first_name = *user['user']['name'].reverse.split(/\s+/, 2).collect(&:reverse)
+    
+    begin
+      response = aha_client.post("/api/v1/products/#{opts[:aha_product]}/portal_users", portal_user: {email: user['user']['email'], first_name: first_name, last_name: last_name})
+      puts response
+    rescue
+    end
+    
+    idea_created = aha_client.post("/api/v1/products/#{opts[:aha_product]}/ideas", idea: {name: suggestion['title'], description: suggestion['formatted_text'],
+      created_by_portal_user: user['user']['email']})
+    puts idea_created.inspect
       
-    comments = uservoice_client.get_collection("/api/v1/forums/#{opts[:uservoice_forum_id]}/suggestions/#{suggestion['id']}/comments")
+    comments = uservoice_client.get_collection("/api/v1/forums/#{opts[:uservoice_forum_id]}/suggestions/#{suggestion['id']}/comments?per_page=500")
     comments.each do |comment|
       puts comment.inspect
       
       comment_user = uservoice_client.get("/api/v1/users/#{comment['creator']['id']}.json")
-      aha_client.post("api/v1/ideas/#{response.idea.id}/idea_comments", body: comment['formatted_text'], portal_user: {email: comment_user['user']['email']})
+      last_name, first_name = *comment_user['user']['name'].reverse.split(/\s+/, 2).collect(&:reverse)
+    
+      begin
+        response = aha_client.post("/api/v1/products/#{opts[:aha_product]}/portal_users", portal_user: {email: comment_user['user']['email'], first_name: first_name, last_name: last_name})
+        puts response
+      rescue
+      end
+      
+      aha_client.post("api/v1/ideas/#{idea_created['idea']['id']}/idea_comments", idea_comment: {body: comment['formatted_text'], portal_user: comment_user['user']['email']})
     end
     
+    supporters = uservoice_client.get_collection("/api/v1/forums/#{opts[:uservoice_forum_id]}/suggestions/#{suggestion['id']}/supporters?per_page=500")
+    supporters.each do |supporter|
+      puts supporter.inspect
+      
+      vote_user = uservoice_client.get("/api/v1/users/#{supporter['user']['id']}.json")
+      last_name, first_name = *vote_user['user']['name'].reverse.split(/\s+/, 2).collect(&:reverse)
+    
+      begin
+        response = aha_client.post("/api/v1/products/#{opts[:aha_product]}/portal_users", portal_user: {email: vote_user['user']['email'], first_name: first_name, last_name: last_name})
+        puts response
+      rescue
+      end
+      
+      aha_client.post("api/v1/ideas/#{idea_created['idea']['id']}/endorsements", idea_endorsement: {email: vote_user['user']['email']})
+    end
   end
 
 end
 
 
-opts = Slop.parse do
-  banner 'Usage: import.rb [options]'
-  help
+opts = Slop.parse do |o|
+  o.string '--uservoice_domain', 'Uservoice domain'
+  o.string '--uservoice_key', 'Uservoice key'
+  o.string '--uservoice_secret', 'Uservoice secret'
+  o.string '--uservoice_forum_id', 'Numerical ID of the forum to import suggestions from (extract from the URL in the admin UI)'
   
-  on 'uservoice_domain='
-  on 'uservoice_key='
-  on 'uservoice_secret='
-  on 'uservoice_forum_id=', 'Numerical ID of the forum to import suggestions from (extract from the URL in the admin UI)'
+  o.string '--aha_domain', 'Aha domain'
+  o.string '--aha_email', 'Aha email'
+  o.string '--aha_password', 'Aha password'
+  o.string '--aha_product', 'Reference key for the product to create ideas in'
+
+  o.bool '-v', '--verbose', 'Enable verbose mode'
   
-  on 'aha_domain='
-  on 'aha_email='
-  on 'aha_password='
-  on 'aha_product=', 'Reference key for the product to create ideas in'
-  
-  on 'v', 'verbose', 'Enable verbose mode'
+  o.on '--help' do
+    puts o
+    exit
+  end
 end
+
 
 import(opts)
