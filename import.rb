@@ -9,7 +9,7 @@ require 'slop'
 
 def import(opts)
   uservoice_client = UserVoice::Client.new(opts[:uservoice_domain], opts[:uservoice_key], opts[:uservoice_secret])
-  aha_client = AhaApi::Client.new(domain: opts[:aha_domain], url_base: "http://lvh.me:3000/", login: opts[:aha_email], password: opts[:aha_password])
+  aha_client = AhaApi::Client.new(domain: opts[:aha_domain], login: opts[:aha_email], password: opts[:aha_password])
 
   suggestions = uservoice_client.get_collection("/api/v1/forums/#{opts[:uservoice_forum_id]}/suggestions")
   puts "Suggestions to import: #{suggestions.size}" if opts[:verbose]
